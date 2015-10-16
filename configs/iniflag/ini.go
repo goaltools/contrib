@@ -64,5 +64,21 @@ func (c *config) join(m map[string]map[string]string) {
 // value in the configuration file, if any.
 // Otherwise, false is returned as the second argument.
 func (c *config) get(section, key string) (string, bool) {
-	return "", false
+	// Make sure such section exists.
+	if _, ok := c.body[section]; !ok {
+		return "", false
+	}
+
+	// Make sure such key exist.
+	v, ok := c.body[section][key]
+	if !ok {
+		return "", false
+	}
+
+	// Replace environment variables in the received value
+	// and return it.
+	v = envVar.ReplaceAllStringFunc(v, func(k string) string {
+		return os.Getenv(envVar.ReplaceAllString(k, "$1"))
+	})
+	return v, true
 }
