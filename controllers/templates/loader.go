@@ -38,12 +38,12 @@ func load(root string, views string, templatePaths map[string]string) {
 
 			// Check whether this template is a base. If so, do not load
 			// any other bases.
-			if b == baseTemplate {
+			if b == *baseTemplate {
 				break
 			}
 
 			// Check whether base template exists in the directory.
-			base = filepath.Join(dir, baseTemplate)
+			base = filepath.Join(dir, *baseTemplate)
 			if _, ok := templates[base]; ok || contains(templatePaths, base) {
 				break
 			}
@@ -60,7 +60,7 @@ func load(root string, views string, templatePaths map[string]string) {
 
 		// If the base was found, use it. Otherwise, go without it.
 		var err error
-		t := template.New(path).Funcs(Funcs).Delims(delimLeft, delimRight)
+		t := template.New(path).Funcs(Funcs).Delims(*delimLeft, *delimRight)
 		if base != "" {
 			templates[path], err = t.ParseFiles(
 				filepath.Join(root, base),

@@ -3,15 +3,24 @@
 package templates
 
 import (
+	"flag"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 
-	"github.com/colegion/goal/config"
+	"github.com/sasbury/mini"
 )
 
 var (
-	baseTemplate, templateName, delimLeft, delimRight string
+	baseTemplate   = flag.String("templates:base", "Base.html", "name of the main template")
+	renderTemplate = flag.String("templates:render", "base", "name of template block to render")
+	delimLeft      = flag.String("templates:delimLeft", "{%", "left action delimiter")
+	delimRight     = flag.String("templates:delimRight", "%}", "right action delimiter")
+	listF          = flag.String("templates:views", "assets/views/views.ini", "file with a list of views")
+
+	root  = flag.String("root.directory", "./", "path where files of the project are stored")
+	views = flag.String("views.directory", "views/", "path with the views, relative to the root")
 
 	// Funcs are added to the template's function map.
 	// Functions are expected to return just 1 argument or
@@ -77,16 +86,25 @@ func (c *Templates) RenderNotFound() http.Handler {
 	return c.RenderTemplate("Errors/NotFound.html")
 }
 
-// Init initializes parameters of Templates controller.
-// And is responsible for triggering loading of templates.
-func Init(g config.Getter) {
-	baseTemplate = g.StringDefault("template.base.name", "Base.html")
-	templateName = g.StringDefault("template.main.section", "base")
-	delimLeft = g.StringDefault("template.delim.left", "{%")
-	delimRight = g.StringDefault("template.delim.right", "%}")
+// Init initializes triggers loading of templates.
+func Init() {
+	load(*root, *views, loadViewsList())
+}
 
-	root := g.StringDefault("root.directory", "./")
-	views := g.StringDefault("views.directory", "views/")
-	templates := g.Section("views")
-	load(root, views, templates)
+func loadViewsList() map[string]string {
+	// Open the configuration file with a list of views.
+	c, err := mini.LoadConfiguration(*listF)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Get all the keys that are found there.
+	ks := c.KeysForSection("views")
+
+	// Generate a list of file names.
+	m := map[string]string{}
+	for i := range ks {
+		m[ks[i]] = c.StringFromSection("views", ks[i], "")
+	}
+	return m
 }
