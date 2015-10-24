@@ -1,7 +1,6 @@
 package templates
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -25,7 +24,7 @@ func (t *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(t.status)
 		err := tpl.ExecuteTemplate(w, *renderTemplate, t.context)
 		if err != nil {
-			go log.Println(err)
+			go Log.Println(err)
 		}
 		return
 	}
@@ -33,5 +32,5 @@ func (t *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Otherwise, show internal server error.
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Write([]byte("500 Internal Server Error"))
-	go log.Printf(`Template "%s" does not exist.`, t.template)
+	go Log.Printf(`Template "%s" does not exist.`, t.template)
 }
