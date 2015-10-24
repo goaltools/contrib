@@ -2,10 +2,9 @@ package denco
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"testing"
-
-	"github.com/colegion/goal/log"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/naoina/denco"
@@ -88,7 +87,7 @@ func newRequest(method, path string) *http.Request {
 	// Create a new request.
 	req, err := http.NewRequest(method, path, nil)
 	if err != nil {
-		log.Error.Panicf("Failed to create a request. Error: %s.", err)
+		log.Panicf("Failed to create a request. Error: %s.", err)
 	}
 	return req
 }
@@ -350,11 +349,11 @@ func init() {
 	var err error
 	dencoH, err = dencoMux.Build(dencoList)
 	if err != nil {
-		log.Error.Fatal(err)
+		log.Fatal(err)
 	}
 	err = routingH.Handle(routingList).Build()
 	if err != nil {
-		log.Error.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
