@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/sasbury/mini"
 )
@@ -19,13 +20,19 @@ var (
 	delimRight     = flag.String("templates:delimRight", "%}", "right action delimiter")
 	listF          = flag.String("templates:views", "assets/views/views.ini", "file with a list of views")
 
+	tpl500 = flag.String("templates:500", "Errors/InternalError.html", "template to render in case of internal error")
+	tpl404 = flag.String("templates:404", "Errors/NotFound.html", "template to render when page not found")
+
 	root  = flag.String("root.directory", "./", "path where files of the project are stored")
-	views = flag.String("views.directory", "views/", "path with the views, relative to the root")
+	views = flag.String("templates:path", "views/", "path with the views, relative to the root")
 
 	// Funcs are added to the template's function map.
 	// Functions are expected to return just 1 argument or
 	// 2 in case the second one is of error type.
 	Funcs template.FuncMap
+
+	// Log is a default logger of the controller.
+	Log = log.New(os.Stderr, "Requests Controller: ", log.LstdFlags)
 )
 
 // Templates is a controller that provides support of HTML result
@@ -77,16 +84,16 @@ func (c *Templates) RenderTemplate(templatePath string) http.Handler {
 // RenderError is an action that renders Error 500 page.
 func (c *Templates) RenderError() http.Handler {
 	c.Status = http.StatusInternalServerError
-	return c.RenderTemplate("Errors/InternalError.html")
+	return c.RenderTemplate(*tpl500)
 }
 
 // RenderNotFound is an action that renders Error 404 page.
 func (c *Templates) RenderNotFound() http.Handler {
 	c.Status = http.StatusNotFound
-	return c.RenderTemplate("Errors/NotFound.html")
+	return c.RenderTemplate(*tpl404)
 }
 
-// Init initializes triggers loading of templates.
+// Init triggers loading of templates.
 func Init() {
 	load(*root, *views, loadViewsList())
 }
@@ -95,7 +102,7 @@ func loadViewsList() map[string]string {
 	// Open the configuration file with a list of views.
 	c, err := mini.LoadConfiguration(*listF)
 	if err != nil {
-		log.Fatal(err)
+		Log.Fatal(err)
 	}
 
 	// Get all the keys that are found there.

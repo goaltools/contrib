@@ -2,7 +2,6 @@ package templates
 
 import (
 	"html/template"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,7 +16,7 @@ var templates = map[string]*template.Template{}
 // It checks whether all the templates exist, parses and registers them.
 // It panics if some of the requested templates do not exist or cannot be parsed.
 func load(root string, views string, templatePaths map[string]string) {
-	log.Println("Loading templates...")
+	Log.Println("Loading templates...")
 	root = filepath.Join(root, views)
 
 	// Iterating over all available template paths.
@@ -28,7 +27,7 @@ func load(root string, views string, templatePaths map[string]string) {
 		limit, i := 100, 0
 		for {
 			if i++; i == limit {
-				log.Println("Limit reached when loading templates.")
+				Log.Println("Limit reached when loading templates.")
 				break
 			}
 
@@ -56,7 +55,7 @@ func load(root string, views string, templatePaths map[string]string) {
 			}
 		}
 
-		log.Printf("\t%s (%s)", path, base)
+		Log.Printf("\t%s (%s)", path, base)
 
 		// If the base was found, use it. Otherwise, go without it.
 		var err error
@@ -91,7 +90,7 @@ func showError(root, base, path string, err error) {
 		return
 	}
 	pwd, _ := os.Getwd()
-	log.Panicf(
+	Log.Panicf(
 		`Cannot parse "%s" with "%s" as a base template (pwd "%s"). Error: %v.`,
 		filepath.Join(root, path), filepath.Join(root, base), pwd, err,
 	)
