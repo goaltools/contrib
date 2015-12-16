@@ -40,7 +40,7 @@ func (c *Requests) Initially(w http.ResponseWriter, r *http.Request, as []string
 	switch r.Header.Get("Content-Type") {
 	case "multipart/form-data":
 		err = r.ParseMultipartForm(*maxMem << 20)
-	case "application/x-www-form-urlencoded":
+	default:
 		err = r.ParseForm()
 	}
 
