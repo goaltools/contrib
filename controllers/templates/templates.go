@@ -93,6 +93,12 @@ func (c *Templates) RenderNotFound() http.Handler {
 	return c.RenderTemplate(*tpl404)
 }
 
+// Redirect gets a URI or URN (e.g. "https://si.te/smt or "/users")
+// and returns a handler for user's redirect using 303 status code.
+func (c *Templates) Redirect(urn string) http.Handler {
+	return http.RedirectHandler(urn, http.StatusSeeOther)
+}
+
 // Init triggers loading of templates.
 func Init() {
 	load(*root, *views, loadViewsList())
