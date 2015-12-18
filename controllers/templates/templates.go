@@ -29,7 +29,7 @@ var (
 	// Funcs are added to the template's function map.
 	// Functions are expected to return just 1 argument or
 	// 2 in case the second one is of error type.
-	Funcs template.FuncMap
+	Funcs = template.FuncMap{}
 
 	// Log is a default logger of the controller.
 	Log = log.New(os.Stderr, "Requests Controller: ", log.LstdFlags)
