@@ -20,8 +20,8 @@ var (
 	delimRight = flag.String("templates:delimRight", "%}", "right action delimiter")
 
 	views   = flag.String("templates:path", "./views/", "path to the directory with views")
-	defTpl  = flag.String("templates:default.pattern", "%s/%s.html", "default template's name pattern")
-	errsDir = flag.String("templates:errors.dir", "errors", "a directory with error templates")
+	defTpl  = flag.String("templates:default.pattern", "%v/%v.html", "default template's name pattern")
+	errsDir = flag.String("templates:errors.dir", "Errors", "a directory with error templates")
 
 	devMode  = flag.Bool("mode.dev", false, "development mode with debugging enabled")
 	contType = flag.String("templates:content.type", "text/html; charset=utf-8", "Content-Type header's value")
@@ -72,6 +72,7 @@ func (c *Templates) Initially(w http.ResponseWriter, r *http.Request, a []string
 func (c *Templates) RenderTemplate(templatePath string) http.Handler {
 	return &Handler{
 		context:  c.Context,
+		status:   c.StatusCode,
 		template: templatePath,
 	}
 }
