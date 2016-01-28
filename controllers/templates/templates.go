@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -124,6 +125,6 @@ func (c *Templates) Redirect(urn string) http.Handler {
 }
 
 // Init triggers loading of templates.
-func Init() {
+func Init(_ url.Values) {
 	templates = load(*views)
 }

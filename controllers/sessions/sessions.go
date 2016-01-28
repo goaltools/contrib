@@ -4,6 +4,7 @@ package sessions
 import (
 	"flag"
 	"net/http"
+	"net/url"
 
 	"github.com/gorilla/securecookie"
 )
@@ -57,7 +58,7 @@ func (c *Sessions) Finally(w http.ResponseWriter, r *http.Request, as []string) 
 
 // Init is a function that is used for initialization of
 // Sessions controller.
-func Init() {
+func Init(_ url.Values) {
 	hashKey = []byte(*appSecret)
 	s = securecookie.New(hashKey, nil)
 }
