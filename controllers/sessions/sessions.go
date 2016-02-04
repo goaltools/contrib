@@ -3,8 +3,10 @@ package sessions
 
 import (
 	"flag"
+	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/securecookie"
 )
@@ -12,7 +14,10 @@ import (
 var (
 	cookieName   = flag.String("sessions:cookie.name", "_Session", "name of the cookie with session data")
 	cookieDomain = flag.String("sessions:cookie.domain", "", "domain of cookie")
-	cookieSecure = flag.Bool("sessions:cookie.secure", false, "")
+	cookieSecure = flag.Bool("sessions:cookie.secure", false, "prevent transmission of a cookie in clear text")
+
+	cookieMaxAge = flag.Int("sessions:cookie.maxage", 0, "time in seconds for when a cookie will be deleted")
+	cookieExpire = flag.String("session:cookie.expires.duration", "600h", "a time duration when a cookie expires")
 
 	httpOnly  = flag.Bool("sessions:cookie.http.only", false, "")
 	appSecret = flag.String("sessions:app.secret", string(securecookie.GenerateRandomKey(64)), "")
@@ -20,6 +25,8 @@ var (
 	hashKey []byte
 
 	s *securecookie.SecureCookie
+
+	expireAfter *time.Duration
 )
 
 // Sessions is a controller that makes Session field
@@ -43,17 +50,26 @@ func (c *Sessions) Initially(w http.ResponseWriter, r *http.Request, as []string
 // life cycle and is responsible for creating a signed cookie with session info.
 func (c *Sessions) Finally(w http.ResponseWriter, r *http.Request, as []string) bool {
 	if encoded, err := s.Encode(*cookieName, c.Session); err == nil {
-		cookie := &http.Cookie{
-			Name:     *cookieName,
-			Value:    encoded,
-			Domain:   *cookieDomain,
-			HttpOnly: *httpOnly,
-			Path:     "/",
-			Secure:   *cookieSecure,
-		}
+		cookie := c.cookie(encoded)
 		http.SetCookie(w, cookie)
 	}
 	return false
+}
+
+func (c *Sessions) cookie(data string) *http.Cookie {
+	cookie := &http.Cookie{
+		Name:     *cookieName,
+		Value:    data,
+		Domain:   *cookieDomain,
+		HttpOnly: *httpOnly,
+		Path:     "/",
+		Secure:   *cookieSecure,
+		MaxAge:   *cookieMaxAge,
+	}
+	if expireAfter != nil {
+		cookie.Expires = time.Now().Local().Add(*expireAfter)
+	}
+	return cookie
 }
 
 // Init is a function that is used for initialization of
@@ -61,4 +77,14 @@ func (c *Sessions) Finally(w http.ResponseWriter, r *http.Request, as []string) 
 func Init(_ url.Values) {
 	hashKey = []byte(*appSecret)
 	s = securecookie.New(hashKey, nil)
+
+	// Convert "expiration" string to a time duration
+	// if it is not empty.
+	if *cookieExpire != "" {
+		e, err := time.ParseDuration(*cookieExpire)
+		if err != nil {
+			log.Panicf(`Cannot parse expire time duration. Error: %v.`, err)
+		}
+		expireAfter = &e
+	}
 }
