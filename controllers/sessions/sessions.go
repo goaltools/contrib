@@ -17,7 +17,7 @@ var (
 	cookieSecure = flag.Bool("sessions:cookie.secure", false, "prevent transmission of a cookie in clear text")
 
 	cookieMaxAge = flag.Int("sessions:cookie.maxage", 0, "time in seconds for when a cookie will be deleted")
-	cookieExpire = flag.String("session:cookie.expires.duration", "600h", "a time duration when a cookie expires")
+	cookieExpire = flag.String("sessions:cookie.expires.duration", "", "a time duration when a cookie expires")
 
 	httpOnly  = flag.Bool("sessions:cookie.http.only", false, "")
 	appSecret = flag.String("sessions:app.secret", string(securecookie.GenerateRandomKey(64)), "")
@@ -86,5 +86,11 @@ func Init(_ url.Values) {
 			log.Panicf(`Cannot parse expire time duration. Error: %v.`, err)
 		}
 		expireAfter = &e
+		log.Printf(`Parameter "cookie.expires.duration" is equal to %v.`, expireAfter)
+	}
+
+	// Print a message if MaxAge is set.
+	if *cookieMaxAge != 0 {
+		log.Printf(`Parameter "cookie.maxage" is equal to %vs.`, *cookieMaxAge)
 	}
 }
