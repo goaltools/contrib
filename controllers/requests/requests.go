@@ -2,9 +2,7 @@ package requests
 
 import (
 	"flag"
-	"log"
 	"net/http"
-	"os"
 )
 
 var (
@@ -12,51 +10,47 @@ var (
 	// files 32MB of which are stored in memory). The remainder (out of 32MB) is stored
 	// on disk in temporary files.
 	maxMem = flag.Int64("requests:max.memory", 32, "number of MB to store in memory when parsing a file")
-
-	// Log is a default logger of the controller.
-	Log = log.New(os.Stderr, "Requests Controller: ", log.LstdFlags)
 )
 
 // Requests is a controller that does two things:
 // 1. Calls Request.ParseForm to parse GET / POST requests;
 // 2. Makes Request available in your controller (use c.Request).
 type Requests struct {
-	Request *http.Request
+	Request *http.Request `bind:"request"`
 }
 
-// Initially calls ParseForm on the request and saves it to c.Request.
+// Before calls ParseForm of the c.Request.
 // At the same time, if used with a standard goal routing package,
 // parameters extracted from URN are saved to the Form field of the Request.
-func (c *Requests) Initially(w http.ResponseWriter, r *http.Request, as []string) bool {
+func (c *Requests) Before() http.Handler {
 	// Save the old value of Form, "github.com/colegion/contrib/routers/denco"
 	// uses it to pass parameters extracted from URN.
-	t := r.Form
+	t := c.Request.Form
 
 	// Set r.Form to nil, otherwise ParseForm / ParseMultipartForm will not work.
-	r.Form = nil
+	c.Request.Form = nil
 
 	// Parse the body depending on the Content-Type.
 	var err error
-	switch r.Header.Get("Content-Type") {
+	switch c.Request.Header.Get("Content-Type") {
 	case "multipart/form-data":
-		err = r.ParseMultipartForm(*maxMem << 20)
+		err = c.Request.ParseMultipartForm(*maxMem << 20)
 	default:
-		err = r.ParseForm()
+		err = c.Request.ParseForm()
 	}
 
 	// Make sure the parsing was successfull.
+	// Otherwise, return a "bad request" error.
 	if err != nil {
-		go Log.Printf("Failed to parse request body: %v.", err)
-		return true
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		})
 	}
 
 	// Add the old values from router to the new r.Form.
 	// Copying only one value per key as the router does not pass more than that.
 	for k := range t {
-		r.Form.Add(k, t.Get(k))
+		c.Request.Form.Add(k, t.Get(k))
 	}
-
-	// Save the request, so it can be accessed from child controllers.
-	c.Request = r
-	return false
+	return nil
 }
