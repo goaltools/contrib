@@ -2,7 +2,6 @@ package requests
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
@@ -20,18 +19,19 @@ func TestRequestsInitially(t *testing.T) {
 	for _, h := range []string{
 		"application/x-www-form-urlencoded",
 	} {
-		c := &Requests{}
-
-		w := httptest.NewRecorder()
 		r, err := http.NewRequest("POST", "test?x=z", strings.NewReader(vs.Encode()))
 		assertNil(t, err)
-		r.Header.Set("Content-Type", h)
 
-		// Imitating values that was passed by contrib/routers/denco
+		c := &Requests{
+			Request: r,
+		}
+		c.Request.Header.Set("Content-Type", h)
+
+		// Imitating values that were passed by contrib/routers/denco
 		// using Form of the request.
 		// Only the first value of every key will be joined with the result r.Form
 		// as the router doesn't pass more than that anyway.
-		r.Form = url.Values{
+		c.Request.Form = url.Values{
 			"router_key1": {"value1"},
 			"router_key2": {"value2_a", "value2_b"},
 			"key3":        {"router_value3_a", "router_value3_b"},
@@ -48,18 +48,14 @@ func TestRequestsInitially(t *testing.T) {
 
 		// After Initially is called both requests' values and
 		// the router's values must be combined.
-		finish := c.Initially(w, r, []string{"TestController", "TestAction"})
-		if finish {
+		hf := c.Before()
+		if hf != nil {
 			t.Errorf("Magic method Initially unexpectedly returned `finish == true` (Content-Type: %v).", h)
 			t.FailNow()
 		}
 
-		if !reflect.DeepEqual(r, c.Request) {
-			t.Errorf("Request was not saved for use in the child controllers (Content-Type: %v).", h)
-		}
-
 		if !reflect.DeepEqual(c.Request.Form, exp) {
-			t.Errorf("Expected %v, %v. Got %v, %v (Content-Type: %v).", exp, false, c.Request.Form, finish, h)
+			t.Errorf("Expected %v, %v. Got %v, %v (Content-Type: %v).", exp, nil, c.Request.Form, hf, h)
 		}
 	}
 }
