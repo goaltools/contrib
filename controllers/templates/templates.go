@@ -51,21 +51,22 @@ type Templates struct {
 	StatusCode int
 
 	defTpl string
+
+	Action     string `bind:"action"`
+	Controller string `bind:"controller"`
 }
 
-// Initially sets a name of the template that should be rendered by default
+// Before sets a name of the template that should be rendered by default
 // (i.e. if no templates are defined explicitly). It will looks as follows:
 //	CurrentController + / + CurrentAction + .html
-// Argument a is guaranteed to contain at least 2 arguments: Controller's name
-// as 0th and Action's name as 1st.
 // It also allocates and initializes Context.
-func (c *Templates) Initially(w http.ResponseWriter, r *http.Request, a []string) bool {
-	// Set the default template to render.
-	c.defTpl = fmt.Sprintf(*defTpl, a[0], a[1])
+func (c *Templates) Before() http.Handler {
+	// Set the default template name that's expected to be render.
+	c.defTpl = fmt.Sprintf(*defTpl, c.Controller, c.Action)
 
 	// Allocate a new context.
 	c.Context = map[string]interface{}{}
-	return false
+	return nil
 }
 
 // RenderTemplate is an action that gets a path to template
