@@ -2,7 +2,6 @@ package sessions
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"testing"
 	"time"
@@ -20,11 +19,12 @@ func TestCookieExpiration(t *testing.T) {
 	*cookieMaxAge = 100
 	Init(url.Values{})
 
-	w := httptest.NewRecorder()
 	r, _ := http.NewRequest("GET", "/", nil)
 
-	c := Sessions{}
-	c.Initially(w, r, []string{})
+	c := Sessions{
+		Request: r,
+	}
+	c.Before()
 
 	expMax := time.Now().Add(*expireAfter)
 	expMin := expMax.Add(-time.Second)
