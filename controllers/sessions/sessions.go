@@ -34,16 +34,18 @@ var (
 // controller as a parent.
 type Sessions struct {
 	Session map[string]string
+
+	Request *http.Request `bind:"request"`
 }
 
-// Initially is a magic method that gets session info from a request
+// Before is a magic action that gets session info from a request
 // and initializes Session field.
-func (c *Sessions) Initially(w http.ResponseWriter, r *http.Request, as []string) bool {
+func (c *Sessions) Before() http.Handler {
 	c.Session = map[string]string{}
-	if cookie, err := r.Cookie(*cookieName); err == nil {
+	if cookie, err := c.Request.Cookie(*cookieName); err == nil {
 		s.Decode(*cookieName, cookie.Value, &c.Session)
 	}
-	return false
+	return nil
 }
 
 // Finally is a magic method that will be executed at the very end of request
