@@ -35,7 +35,8 @@ var (
 type Sessions struct {
 	Session map[string]string
 
-	Request *http.Request `bind:"request"`
+	Request  *http.Request       `bind:"request"`
+	Response http.ResponseWriter `bind:"response"`
 }
 
 // Before is a magic action that gets session info from a request
@@ -48,14 +49,14 @@ func (c *Sessions) Before() http.Handler {
 	return nil
 }
 
-// Finally is a magic method that will be executed at the very end of request
+// After is a magic action that will be executed at the very end of request
 // life cycle and is responsible for creating a signed cookie with session info.
-func (c *Sessions) Finally(w http.ResponseWriter, r *http.Request, as []string) bool {
+func (c *Sessions) After() http.Handler {
 	if encoded, err := s.Encode(*cookieName, c.Session); err == nil {
 		cookie := c.cookie(encoded)
-		http.SetCookie(w, cookie)
+		http.SetCookie(c.Response, cookie)
 	}
-	return false
+	return nil
 }
 
 func (c *Sessions) cookie(data string) *http.Cookie {
@@ -76,7 +77,7 @@ func (c *Sessions) cookie(data string) *http.Cookie {
 
 // Init is a function that is used for initialization of
 // Sessions controller.
-func Init(_ url.Values) {
+func Init(url.Values) {
 	hashKey = []byte(*appSecret)
 	s = securecookie.New(hashKey, nil)
 
