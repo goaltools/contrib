@@ -9,6 +9,31 @@ import (
 	"testing"
 )
 
+func TestRouter_Build(t *testing.T) {
+	rs := []struct {
+		Method, Pattern string
+		Handler         http.HandlerFunc
+	}{
+		{
+			"GET", "/", testHandlerFunc,
+		},
+		{
+			"ROUTE", "/route", testHandlerFunc,
+		},
+	}
+
+	// Build an HTTP handler function.
+	h, err := Build(rs)
+	if err != nil {
+		t.Errorf("Failed to build a handler. Error: %s.", err)
+	}
+
+	server := httptest.NewServer(h)
+	defer server.Close()
+
+	// TODO: test correctness of server's work.
+}
+
 func TestRouter(t *testing.T) {
 	rs := Routes{
 		Get("/", testHandlerFunc),

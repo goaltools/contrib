@@ -36,6 +36,12 @@ import (
 	"github.com/naoina/denco"
 )
 
+const wildcardMethod = "ROUTE"
+
+var methods = []string{
+	"GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "OPTIONS", "CONNECT", "PATCH",
+}
+
 // Router represents a multiplexer for HTTP requests.
 type Router struct {
 	data    *denco.Router  // data stores denco router.
@@ -112,6 +118,29 @@ func NewRouter() *Router {
 	return &Router{
 		indexes: map[string]int{},
 	}
+}
+
+// Build expects a list of Goal routes as input.
+// They are built and returned as an HTTP handler.
+func Build(rs []struct {
+	Method, Pattern string
+	Handler         http.HandlerFunc
+}) (http.Handler, error) {
+	// Generate a new router.
+	ls := Routes{}
+	for i := range rs {
+		if rs[i].Method != "ROUTE" {
+			ls = append(ls, Do(rs[i].Method, rs[i].Pattern, rs[i].Handler))
+			continue
+		}
+		for j := range methods {
+			ls = append(ls, Do(methods[j], rs[i].Pattern, rs[i].Handler))
+		}
+	}
+	r := NewRouter().Handle(ls)
+
+	// Build the router and return result.
+	return r, r.Build()
 }
 
 // Get is an short form of Route("GET", pattern, handler).
