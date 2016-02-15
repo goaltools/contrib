@@ -9,31 +9,6 @@ import (
 	"testing"
 )
 
-func TestRouter_Build(t *testing.T) {
-	rs := []struct {
-		Method, Pattern string
-		Handler         http.HandlerFunc
-	}{
-		{
-			"GET", "/", testHandlerFunc,
-		},
-		{
-			"ROUTE", "/route", testHandlerFunc,
-		},
-	}
-
-	// Build an HTTP handler function.
-	h, err := Build(rs)
-	if err != nil {
-		t.Errorf("Failed to build a handler. Error: %s.", err)
-	}
-
-	server := httptest.NewServer(h)
-	defer server.Close()
-
-	// TODO: test correctness of server's work.
-}
-
 func TestRouter(t *testing.T) {
 	rs := Routes{
 		Get("/", testHandlerFunc),
@@ -45,12 +20,25 @@ func TestRouter(t *testing.T) {
 		Delete("/profile/:name", testHandlerFunc),
 		Do("GET", "/profile/update", testHandlerFunc),
 	}
+	rs1 := []struct {
+		Method, Pattern string
+		Handler         http.HandlerFunc
+	}{
+		{"GET", "/", testHandlerFunc},
+		{"GET", "/profile/:name", testHandlerFunc},
+		{"GET", "/profile/:name", testHandlerFuncHelloWorld},
+		{"POST", "/profile/:name", testHandlerFunc},
+		{"HEAD", "/profile/:name", testHandlerFunc},
+		{"PUT", "/profile/:name", testHandlerFunc},
+		{"DELETE", "/profile/:name", testHandlerFunc},
+		{"GET", "/profile/update", testHandlerFunc},
+	}
 
 	// Creating a new router manually.
 	r := NewRouter()
 	err := r.Handle(rs).Build()
 	if err != nil {
-		t.Errorf("Failed to build a handler. Error: %s.", err)
+		t.Errorf("Failed to build a handler using manual method. Error: %s.", err)
 	}
 
 	server := httptest.NewServer(r)
@@ -59,11 +47,20 @@ func TestRouter(t *testing.T) {
 	// Using a Build shortcut.
 	h, err := rs.Build()
 	if err != nil {
-		t.Errorf("Failed to build a handler. Error: %s.", err)
+		t.Errorf("Failed to build a handler using Build shortcut. Error: %s.", err)
 	}
 
 	server1 := httptest.NewServer(h)
 	defer server1.Close()
+
+	// Using a Build function.
+	h, err = Build(rs1)
+	if err != nil {
+		t.Errorf("Failed to build a handler using Build() function. Error: %s.", err)
+	}
+
+	server2 := httptest.NewServer(h)
+	defer server2.Close()
 
 	for _, v := range []struct {
 		status                 int
@@ -111,7 +108,7 @@ func TestRouter(t *testing.T) {
 			404, "POST", "/qwerty", "404 page not found\n",
 		},
 	} {
-		for _, s := range []*httptest.Server{server, server1} {
+		for _, s := range []*httptest.Server{server, server1, server2} {
 			req, err := http.NewRequest(v.method, s.URL+v.path, nil)
 			if err != nil {
 				t.Errorf("Failed to create a new request. Error: %s.", err)
