@@ -131,6 +131,8 @@ func Build(rs []struct {
 			NotFound = rs[i].Handler
 		case "405":
 			MethodNotAllowed = rs[i].Handler
+		case "500":
+			InternalServerError = rs[i].Handler
 		}
 		ls = append(ls, Do(rs[i].Method, rs[i].Pattern, rs[i].Handler))
 		continue
@@ -170,6 +172,11 @@ func Delete(pattern string, handler http.HandlerFunc) *Route {
 // It dispatches the request to the handler whose pattern
 // most closely matches the request URL.
 func (t *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			InternalServerError(w, r)
+		}
+	}()
 	h, _ := t.Handler(r)
 	h.ServeHTTP(w, r)
 }
@@ -253,16 +260,20 @@ func (t *Router) Handler(r *http.Request) (handler http.Handler, pattern string)
 	return handler, route.Pattern
 }
 
-// MethodNotAllowed replies to the request with an HTTP 405 method not allowed
-// error. If you want to use your own MethodNotAllowed handler, please override
-// this variable.
+// MethodNotAllowed replies to the request with an HTTP 405 method not allowed error.
+// It is called when an HTTP handler with unsupported method is requested.
 var MethodNotAllowed = func(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "405 method not allowed", http.StatusMethodNotAllowed)
+	http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 }
 
 // NotFound replies to the request with an HTTP 404 not found error.
-// NotFound is called when unknown HTTP method or a handler not found.
-// If you want to use the your own NotFound handler, please overwrite this variable.
+// It is called when requested path is not known.
 var NotFound = func(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
+}
+
+// InternalServerError replies to the request with an HTTP 500 internal server error.
+// It is called when a panic is occured in the requested handler.
+var InternalServerError = func(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }

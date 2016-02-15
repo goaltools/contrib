@@ -14,6 +14,7 @@ func TestRouter_SpecialLabels(t *testing.T) {
 	// Preserve the old values of NotFound and MethodNotAllowed handlers.
 	nf := NotFound
 	mna := MethodNotAllowed
+	ise := InternalServerError
 
 	rs := []struct {
 		Method, Pattern, Label string
@@ -21,6 +22,7 @@ func TestRouter_SpecialLabels(t *testing.T) {
 	}{
 		{"GET", "/", "404", testHandlerFunc},
 		{"GET", "/profile/:name", "405", testHandlerFuncHelloWorld},
+		{"GET", "/", "500", testHandlerFunc},
 	}
 
 	_, err := Build(rs)
@@ -32,6 +34,7 @@ func TestRouter_SpecialLabels(t *testing.T) {
 	for _, hs := range [][]http.HandlerFunc{
 		{NotFound, testHandlerFunc},
 		{MethodNotAllowed, testHandlerFuncHelloWorld},
+		{InternalServerError, testHandlerFunc},
 	} {
 		r, _ := http.NewRequest("GET", "/", nil)
 		w1 := httptest.NewRecorder()
@@ -49,6 +52,7 @@ func TestRouter_SpecialLabels(t *testing.T) {
 	// Restore the old values of errors handlers.
 	NotFound = nf
 	MethodNotAllowed = mna
+	InternalServerError = ise
 }
 
 func TestRouter(t *testing.T) {
@@ -61,6 +65,7 @@ func TestRouter(t *testing.T) {
 		Put("/profile/:name", testHandlerFunc),
 		Delete("/profile/:name", testHandlerFunc),
 		Do("GET", "/profile/update", testHandlerFunc),
+		Get("/panic", testHandlerFuncPanic),
 	}
 	rs1 := []struct {
 		Method, Pattern, Label string
@@ -74,6 +79,7 @@ func TestRouter(t *testing.T) {
 		{"PUT", "/profile/:name", "", testHandlerFunc},
 		{"DELETE", "/profile/:name", "", testHandlerFunc},
 		{"GET", "/profile/update", "", testHandlerFunc},
+		{"GET", "/panic", "", testHandlerFuncPanic},
 	}
 
 	// Creating a new router manually.
@@ -144,10 +150,13 @@ func TestRouter(t *testing.T) {
 			fmt.Sprintf("method: GET, path: /profile/update, form: %v", url.Values{}),
 		},
 		{
-			405, "POST", "/", "405 method not allowed\n",
+			405, "POST", "/", http.StatusText(405) + "\n",
 		},
 		{
 			404, "POST", "/qwerty", "404 page not found\n",
+		},
+		{
+			500, "GET", "/panic", http.StatusText(500) + "\n",
 		},
 	} {
 		for _, s := range []*httptest.Server{server, server1, server2} {
@@ -185,4 +194,7 @@ func testHandlerFunc(w http.ResponseWriter, r *http.Request) {
 func testHandlerFuncHelloWorld(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Hello, world!\n")
 	testHandlerFunc(w, r)
+}
+func testHandlerFuncPanic(w http.ResponseWriter, r *http.Request) {
+	panic("something")
 }
