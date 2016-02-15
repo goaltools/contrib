@@ -36,12 +36,6 @@ import (
 	"github.com/naoina/denco"
 )
 
-const wildcardMethod = "ROUTE"
-
-var methods = []string{
-	"GET", "HEAD", "POST", "PUT", "DELETE", "TRACE", "OPTIONS", "CONNECT", "PATCH",
-}
-
 // Router represents a multiplexer for HTTP requests.
 type Router struct {
 	data    *denco.Router  // data stores denco router.
@@ -129,13 +123,8 @@ func Build(rs []struct {
 	// Generate a new router.
 	ls := Routes{}
 	for i := range rs {
-		if rs[i].Method != "ROUTE" {
-			ls = append(ls, Do(rs[i].Method, rs[i].Pattern, rs[i].Handler))
-			continue
-		}
-		for j := range methods {
-			ls = append(ls, Do(methods[j], rs[i].Pattern, rs[i].Handler))
-		}
+		ls = append(ls, Do(rs[i].Method, rs[i].Pattern, rs[i].Handler))
+		continue
 	}
 	r := NewRouter().Handle(ls)
 
