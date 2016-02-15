@@ -6,8 +6,50 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"testing"
 )
+
+func TestRouter_SpecialLabels(t *testing.T) {
+	// Preserve the old values of NotFound and MethodNotAllowed handlers.
+	nf := NotFound
+	mna := MethodNotAllowed
+
+	rs := []struct {
+		Method, Pattern, Label string
+		Handler                http.HandlerFunc
+	}{
+		{"GET", "/", "404", testHandlerFunc},
+		{"GET", "/profile/:name", "405", testHandlerFuncHelloWorld},
+	}
+
+	_, err := Build(rs)
+	if err != nil {
+		t.Errorf("Failed to build a handler using Build() function. Error: %s.", err)
+	}
+
+	i := 0
+	for _, hs := range [][]http.HandlerFunc{
+		{NotFound, testHandlerFunc},
+		{MethodNotAllowed, testHandlerFuncHelloWorld},
+	} {
+		r, _ := http.NewRequest("GET", "/", nil)
+		w1 := httptest.NewRecorder()
+		w2 := httptest.NewRecorder()
+
+		hs[0](w1, r)
+		hs[1](w2, r)
+
+		if !reflect.DeepEqual(w1.Body, w2.Body) {
+			t.Errorf("%v: Handler wasn't set.", rs[i])
+		}
+		i++
+	}
+
+	// Restore the old values of errors handlers.
+	NotFound = nf
+	MethodNotAllowed = mna
+}
 
 func TestRouter(t *testing.T) {
 	rs := Routes{
@@ -21,17 +63,17 @@ func TestRouter(t *testing.T) {
 		Do("GET", "/profile/update", testHandlerFunc),
 	}
 	rs1 := []struct {
-		Method, Pattern string
-		Handler         http.HandlerFunc
+		Method, Pattern, Label string
+		Handler                http.HandlerFunc
 	}{
-		{"GET", "/", testHandlerFunc},
-		{"GET", "/profile/:name", testHandlerFunc},
-		{"GET", "/profile/:name", testHandlerFuncHelloWorld},
-		{"POST", "/profile/:name", testHandlerFunc},
-		{"HEAD", "/profile/:name", testHandlerFunc},
-		{"PUT", "/profile/:name", testHandlerFunc},
-		{"DELETE", "/profile/:name", testHandlerFunc},
-		{"GET", "/profile/update", testHandlerFunc},
+		{"GET", "/", "", testHandlerFunc},
+		{"GET", "/profile/:name", "", testHandlerFunc},
+		{"GET", "/profile/:name", "", testHandlerFuncHelloWorld}, // Must be used as a NotFound handler.
+		{"POST", "/profile/:name", "", testHandlerFunc},
+		{"HEAD", "/profile/:name", "", testHandlerFunc},
+		{"PUT", "/profile/:name", "", testHandlerFunc},
+		{"DELETE", "/profile/:name", "", testHandlerFunc},
+		{"GET", "/profile/update", "", testHandlerFunc},
 	}
 
 	// Creating a new router manually.

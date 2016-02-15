@@ -116,13 +116,22 @@ func NewRouter() *Router {
 
 // Build expects a list of Goal routes as input.
 // They are built and returned as an HTTP handler.
+// It treats routes with the following labels in a special way:
+// * 404 - the handler will be used for NotFound errors.
+// * 405 - the handler will be used for MethodNotAllowed errors.
 func Build(rs []struct {
-	Method, Pattern string
-	Handler         http.HandlerFunc
+	Method, Pattern, Label string
+	Handler                http.HandlerFunc
 }) (http.Handler, error) {
 	// Generate a new router.
 	ls := Routes{}
 	for i := range rs {
+		switch rs[i].Label {
+		case "404":
+			NotFound = rs[i].Handler
+		case "405":
+			MethodNotAllowed = rs[i].Handler
+		}
 		ls = append(ls, Do(rs[i].Method, rs[i].Pattern, rs[i].Handler))
 		continue
 	}
