@@ -2,6 +2,7 @@ package templates
 
 import (
 	"html/template"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -14,7 +15,7 @@ func load(dir string) map[string]*template.Template {
 	m := map[string]*template.Template{}
 
 	dir = filepath.Clean(dir)
-	Log.Printf(`Parsing templates in "%s".`, dir)
+	log.Printf(`Parsing templates in "%s".`, dir)
 
 	tpls := map[string]string{}
 	els := []string{}
@@ -22,7 +23,7 @@ func load(dir string) map[string]*template.Template {
 	filepath.Walk(dir, func(p string, info os.FileInfo, err error) error {
 		// Make sure there are no any errors.
 		if err != nil {
-			Log.Printf("Failed to traverse template files. Error: %v.", err)
+			log.Printf("Failed to traverse template files. Error: %v.", err)
 			return err
 		}
 
@@ -56,7 +57,7 @@ func load(dir string) map[string]*template.Template {
 	})
 
 	// Print a list of element templates.
-	Log.Printf("View elements: %v", els)
+	log.Printf("View elements: %v", els)
 
 	// Parse templates and register them.
 	var err error
@@ -67,15 +68,15 @@ func load(dir string) map[string]*template.Template {
 		// a layout file.
 		if l, ok := ls.path(path.Dir(relNorm)); ok {
 			m[relNorm], err = t.ParseFiles(append(els, l, p)...)
-			Log.Printf("\t%s (%s)", p, l)
+			log.Printf("\t%s (%s)", p, l)
 		} else {
 			m[relNorm], err = t.ParseFiles(append(els, p)...)
-			Log.Printf("\t%s", p)
+			log.Printf("\t%s", p)
 		}
 
 		// Make sure there were no errors during parsing.
 		if err != nil {
-			Log.Panicf(`Failed to parse "%s". Error: %v.`, p, err)
+			log.Panicf(`Failed to parse "%s". Error: %v.`, p, err)
 		}
 	}
 	return m
