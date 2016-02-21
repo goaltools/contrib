@@ -37,18 +37,17 @@ func TestLayouts(t *testing.T) {
 	}
 	for _, v := range []struct {
 		dir string
-		ok  bool
 		res string
 	}{
-		{".", false, ""},
-		{"App", true, filepath.Join(*views, "App", *layout)},
-		{"App/Profiles", true, filepath.Join(*views, "App", "Profiles", *layout)},
-		{"Errors", false, ""},
-		{"Messages", true, filepath.Join(*views, "Messages", *layout)},
-		{"Messages/Test", true, filepath.Join(*views, "Messages", *layout)},
+		{".", ""},
+		{"App", filepath.Join(*views, "App", *layout)},
+		{"App/Profiles", filepath.Join(*views, "App", "Profiles", *layout)},
+		{"Errors", ""},
+		{"Messages", filepath.Join(*views, "Messages", *layout)},
+		{"Messages/Test", filepath.Join(*views, "Messages", *layout)},
 	} {
-		if res, ok := ls.path(v.dir); v.ok != ok || v.res != res {
-			t.Errorf(`Expected: "%s", %v. Got: "%s", %v.`, v.res, v.ok, res, ok)
+		if res := ls.path(v.dir); v.res != res {
+			t.Errorf(`Expected: "%s". Got: "%s".`, v.res, res)
 		}
 	}
 }
