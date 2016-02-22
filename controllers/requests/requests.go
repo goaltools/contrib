@@ -16,7 +16,8 @@ var (
 // 1. Calls Request.ParseForm to parse GET / POST requests;
 // 2. Makes Request available in your controller (use c.Request).
 type Requests struct {
-	Request *http.Request `bind:"request"`
+	Request  *http.Request       `bind:"request"`
+	Response http.ResponseWriter `bind:"response"`
 }
 
 // Before calls ParseForm of the c.Request.
