@@ -6,20 +6,8 @@ import (
 )
 
 var (
-	tplPathKey    = flag.String("context:template.path.key", "@sys.template.path", "a context key for template path")
 	statusCodeKey = flag.String("context:status.code.key", "@sys.status.code", "a context key for status code")
 )
-
-// SetTemplate sets a path to the template that must be rendered.
-func (o Object) SetTemplate(path string) {
-	o[*tplPathKey] = path
-}
-
-// Template returns a path of the template that must be rendered.
-// If not templates were set, empty string is returned.
-func (o *Object) Template() string {
-	return o.String(*tplPathKey)
-}
 
 // SetStatus sets a status code that must be returned with the response.
 func (o Object) SetStatus(code int) {
