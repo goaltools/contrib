@@ -28,6 +28,7 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 
 	"github.com/colegion/contrib/controllers/global"
@@ -76,11 +77,12 @@ func (t Template) RenderTemplate(context global.Object, name string) http.Handle
 				return
 			}
 		}
+		go log.Println(err)
 
 		// If the error above occured while rendering an error 500 page,
 		// log the error and show an empty page to the user.
 		if status == http.StatusInternalServerError {
-			http.Error(w, err.Error(), status)
+			http.Error(w, http.StatusText(status), status)
 			return
 		}
 
