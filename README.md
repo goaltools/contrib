@@ -1,5 +1,5 @@
 # contrib
-Community supported components for Goal toolkit based applications
+Community supported components for Goal toolkit based applications.
 
 [![GoDoc](https://godoc.org/github.com/colegion/contrib?status.svg)](https://godoc.org/github.com/colegion/contrib)
 [![Build Status](https://travis-ci.org/colegion/contrib.svg?branch=master)](https://travis-ci.org/colegion/contrib)
