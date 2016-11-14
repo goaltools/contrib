@@ -81,7 +81,7 @@ func (c *Templates) RenderTemplate(templatePath string) http.Handler {
 
 // Render is an equivalent of the following:
 //	RenderTemplate(CurrentController + "/" + CurrentAction + ".html")
-// The default path pattern may be overriden by adding the following
+// The default path pattern may be overridden by adding the following
 // line to your configuration file:
 //	[templates]
 //	default.pattern = %s/%s.tpl

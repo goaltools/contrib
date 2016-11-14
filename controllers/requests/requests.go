@@ -39,7 +39,7 @@ func (c *Requests) Before() http.Handler {
 		err = c.Request.ParseForm()
 	}
 
-	// Make sure the parsing was successfull.
+	// Make sure the parsing was successful.
 	// Otherwise, return a "bad request" error.
 	if err != nil {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
